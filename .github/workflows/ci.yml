@@ -106,7 +106,7 @@ jobs:
           curl -fs -XPOST localhost:8080/api/v1/orders -H 'content-type: application/json' -d '{"item":"fika","amount_sek":42}'
           docker rm -f smoke
       - name: Scan image (fail on HIGH/CRITICAL with a fix available)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0 (pinned by SHA)
         with:
           image-ref: ${{ env.IMAGE_NAME }}:ci
           severity: HIGH,CRITICAL
