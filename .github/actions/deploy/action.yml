@@ -1,0 +1,35 @@
+name: Deploy orders-service
+description: Kustomize apply + wait for rollout + automatic rollback on failure
+inputs:
+  env:
+    required: true
+  image:
+    required: true
+  aws-account-id:
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::${{ inputs.aws-account-id }}:role/fikapay-${{ inputs.env }}-ci-deploy
+        aws-region: eu-north-1
+    - name: kubeconfig
+      shell: bash
+      run: aws eks update-kubeconfig --name fikapay-${{ inputs.env }} --region eu-north-1
+    - name: Apply
+      shell: bash
+      working-directory: solution/k8s/overlays/${{ inputs.env }}
+      run: |
+        kustomize edit set image orders-service=${{ inputs.image }}
+        kubectl apply -k .
+    - name: Wait for rollout (roll back on failure)
+      shell: bash
+      run: |
+        ns=orders-${{ inputs.env }}
+        if ! kubectl -n "$ns" rollout status deploy/orders-service --timeout=5m; then
+          echo "::error::Rollout failed, rolling back"
+          kubectl -n "$ns" rollout undo deploy/orders-service
+          kubectl -n "$ns" rollout status deploy/orders-service --timeout=5m
+          exit 1
+        fi

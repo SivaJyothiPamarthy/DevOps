@@ -1,0 +1,32 @@
+{
+  "title": "orders-service (RED)",
+  "uid": "orders-red",
+  "schemaVersion": 39,
+  "time": {"from": "now-1h", "to": "now"},
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "timeseries", "title": "Rate (req/s)",
+      "gridPos": {"x": 0, "y": 0, "w": 8, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{"expr": "sum by (endpoint) (rate(http_requests_total[1m]))", "legendFormat": "{{endpoint}}"}]
+    },
+    {
+      "type": "timeseries", "title": "Errors (5xx ratio)",
+      "gridPos": {"x": 8, "y": 0, "w": 8, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "percentunit"}},
+      "targets": [{"expr": "orders:error_ratio:rate5m", "legendFormat": "error ratio"}]
+    },
+    {
+      "type": "timeseries", "title": "Duration (p50 / p99)",
+      "gridPos": {"x": 16, "y": 0, "w": 8, "h": 8},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "s"}},
+      "targets": [
+        {"expr": "histogram_quantile(0.5, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))", "legendFormat": "p50"},
+        {"expr": "histogram_quantile(0.99, sum by (le) (rate(http_request_duration_seconds_bucket[5m])))", "legendFormat": "p99"}
+      ]
+    }
+  ]
+}

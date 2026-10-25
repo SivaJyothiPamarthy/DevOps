@@ -1,0 +1,11 @@
+10.0.0.1 - - [25/Oct/2026:10:00:01 +0200] "GET /api/v1/orders HTTP/1.1" 200 512 "-" "curl/8.0" 0.012
+10.0.0.2 - - [25/Oct/2026:10:00:02 +0200] "POST /api/v1/orders HTTP/1.1" 201 128 "-" "python-requests/2.32" 0.045
+10.0.0.1 - - [25/Oct/2026:10:00:03 +0200] "GET /api/v1/orders/abc HTTP/1.1" 404 32 "-" "curl/8.0" 0.004
+10.0.0.3 - - [25/Oct/2026:10:00:04 +0200] "GET /api/v1/orders HTTP/1.1" 500 64 "-" "Mozilla/5.0" 1.204
+this line is garbage and should be skipped
+10.0.0.1 - - [25/Oct/2026:10:00:05 +0200] "GET /healthz HTTP/1.1" 200 15 "-" "kube-probe/1.30" 0.001
+10.0.0.4 - - [25/Oct/2026:10:00:06 +0200] "POST /api/v1/orders HTTP/1.1" 503 64 "-" "python-requests/2.32" 2.501
+10.0.0.2 - - [25/Oct/2026:10:00:07 +0200] "GET /api/v1/orders HTTP/1.1" 200 512 "-" "curl/8.0" 0.020
+10.0.0.1 - - [25/Oct/2026:10:00:08 +0200] "GET /api/v1/orders HTTP/1.1" 200 512 "-" "curl/8.0" 0.018
+10.0.0.5 - - [25/Oct/2026:10:00:09 +0200] "GET /api/v1/orders HTTP/1.1" 200 512 "-" "curl/8.0" 0.030
+10.0.0.2 - - [25/Oct/2026:10:00:10 +0200] "GET /api/v1/orders?page=2 HTTP/1.1" 200 256 "-" "curl/8.0" 0.025

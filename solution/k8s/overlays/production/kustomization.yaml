@@ -1,0 +1,35 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: orders-production
+resources:
+  - namespace.yaml
+  - ../../base
+  - ingress.yaml
+images:
+  - name: orders-service
+    newName: 123456789012.dkr.ecr.eu-north-1.amazonaws.com/orders-service
+    newTag: latest   # CI pins this to the exact SHA that passed staging
+patches:
+  - target: {kind: Deployment, name: orders-service}
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 3
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: 250m
+  - target: {kind: HorizontalPodAutoscaler, name: orders-service}
+    patch: |
+      - op: replace
+        path: /spec/minReplicas
+        value: 3
+      - op: replace
+        path: /spec/maxReplicas
+        value: 20
+  - target: {kind: PodDisruptionBudget, name: orders-service}
+    patch: |
+      - op: remove
+        path: /spec/minAvailable
+      - op: add
+        path: /spec/maxUnavailable
+        value: 1

@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: orders-staging
+resources:
+  - namespace.yaml
+  - ../../base
+  - ingress.yaml
+images:
+  - name: orders-service
+    newName: 123456789012.dkr.ecr.eu-north-1.amazonaws.com/orders-service
+    newTag: latest   # CI runs `kustomize edit set image` with the git SHA
+patches:
+  - target: {kind: ConfigMap, name: orders-service}
+    patch: |
+      - op: replace
+        path: /data/LOG_LEVEL
+        value: DEBUG
+  - target: {kind: HorizontalPodAutoscaler, name: orders-service}
+    patch: |
+      - op: replace
+        path: /spec/maxReplicas
+        value: 3

@@ -1,0 +1,58 @@
+# SLO: 99.9% of /api requests succeed (non-5xx) over 30 days.
+# Error budget = 0.1%. Multi-window, multi-burn-rate alerts (Google SRE workbook).
+groups:
+  - name: orders-slo-recording
+    rules:
+      - record: orders:error_ratio:rate5m
+        expr: |
+          sum(rate(http_requests_total{endpoint=~"/api.*",status=~"5.."}[5m]))
+          / clamp_min(sum(rate(http_requests_total{endpoint=~"/api.*"}[5m])), 1e-9)
+      - record: orders:error_ratio:rate1h
+        expr: |
+          sum(rate(http_requests_total{endpoint=~"/api.*",status=~"5.."}[1h]))
+          / clamp_min(sum(rate(http_requests_total{endpoint=~"/api.*"}[1h])), 1e-9)
+      - record: orders:error_ratio:rate30m
+        expr: |
+          sum(rate(http_requests_total{endpoint=~"/api.*",status=~"5.."}[30m]))
+          / clamp_min(sum(rate(http_requests_total{endpoint=~"/api.*"}[30m])), 1e-9)
+      - record: orders:error_ratio:rate6h
+        expr: |
+          sum(rate(http_requests_total{endpoint=~"/api.*",status=~"5.."}[6h]))
+          / clamp_min(sum(rate(http_requests_total{endpoint=~"/api.*"}[6h])), 1e-9)
+
+  - name: orders-slo-alerts
+    rules:
+      - alert: OrdersErrorBudgetFastBurn
+        # 14.4x burn => 2% of a 30-day budget consumed in 1 hour. Page someone.
+        expr: |
+          orders:error_ratio:rate1h > (14.4 * 0.001)
+          and orders:error_ratio:rate5m > (14.4 * 0.001)
+        for: 2m
+        labels: {severity: page}
+        annotations:
+          summary: "orders-service is burning error budget fast"
+          runbook: "https://github.com/SivaJyothiPamarthy/DevOps/blob/main/docs/live-troubleshooting.md"
+      - alert: OrdersErrorBudgetSlowBurn
+        # 6x burn => 5% of budget in 6 hours. Ticket, not page.
+        expr: |
+          orders:error_ratio:rate6h > (6 * 0.001)
+          and orders:error_ratio:rate30m > (6 * 0.001)
+        for: 15m
+        labels: {severity: ticket}
+        annotations:
+          summary: "orders-service is slowly burning error budget"
+      - alert: OrdersHighLatencyP99
+        expr: |
+          histogram_quantile(0.99,
+            sum by (le) (rate(http_request_duration_seconds_bucket{endpoint=~"/api.*"}[5m]))
+          ) > 0.5
+        for: 10m
+        labels: {severity: ticket}
+        annotations:
+          summary: "p99 latency above 500ms for 10m"
+      - alert: OrdersDown
+        expr: up{job="orders-service"} == 0
+        for: 1m
+        labels: {severity: page}
+        annotations:
+          summary: "Prometheus cannot scrape orders-service"
